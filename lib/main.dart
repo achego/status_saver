@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:status_saver/app/presentation/home_screen.dart';
+import 'package:status_saver/app/view_models/status_view_model.dart';
 import 'package:status_saver/core/theme/app_theme.dart';
 import 'package:status_saver/core/theme/theme_provider.dart';
 
@@ -17,6 +18,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => StatusViewModel()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
