@@ -5,12 +5,13 @@ import 'package:provider/provider.dart';
 // import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:status_saver/app/models/status_model.dart';
+import 'package:status_saver/app/presentation/screens/image_viewer.dart';
+import 'package:status_saver/app/presentation/screens/video_viewer.dart';
 import 'package:status_saver/app/shared/components/function_widgets.dart';
+import 'package:status_saver/app/view_models/status_view_model.dart';
 import 'package:status_saver/core/utils/app_assets.dart';
 import 'package:status_saver/core/utils/date_time_extension.dart';
 import 'package:status_saver/core/utils/file_utils.dart';
-import 'package:status_saver/app/view_models/status_view_model.dart';
-import 'package:status_saver/app/presentation/screens/image_viewer.dart';
 
 class StatusTile extends StatelessWidget {
   final StatusModel status;
@@ -153,42 +154,23 @@ class StatusTile extends StatelessWidget {
         _navigateToVideoViewer(context);
         break;
     }
-    return;
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ListTile(
-            leading: const Icon(Icons.remove_red_eye),
-            title: const Text('View'),
-            onTap: () {
-              Navigator.pop(context);
-              // TODO(belema): Implement status viewing
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.download),
-            title: const Text('Save'),
-            onTap: () {
-              Navigator.pop(context);
-              _saveStatus(context);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.share),
-            title: const Text('Share'),
-            onTap: () {
-              Navigator.pop(context);
-              _shareStatus(context);
-            },
-          ),
-        ],
-      ),
-    );
   }
 
-  void _navigateToVideoViewer(BuildContext context) {}
+  void _navigateToVideoViewer(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => VideoViewer(
+          currentStatus: status,
+          statuses: context.read<StatusViewModel>().videoStatuses,
+        ),
+      ),
+    ).then((shouldRefresh) {
+      if (shouldRefresh == true) {
+        context.read<StatusViewModel>().refreshStatuses();
+      }
+    });
+  }
 
   void _navigateToImageViewer(BuildContext context) {
     Navigator.push(

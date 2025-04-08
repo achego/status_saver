@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:status_saver/app/presentation/components/bottom_nav_item.dart';
-import 'package:status_saver/app/presentation/screens/home_screen.dart';
-import 'package:status_saver/app/shared/components/function_widgets.dart';
 import 'package:status_saver/app/view_models/status_view_model.dart';
 
 class Dashboard extends StatelessWidget {
@@ -16,9 +14,9 @@ class Dashboard extends StatelessWidget {
         bottomNavigationBar: Container(
           height: 70,
           constraints: BoxConstraints(maxHeight: 70),
-          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          padding: EdgeInsets.symmetric(horizontal: 20),
           decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).scaffoldBackgroundColor,
               border: Border(
                 top: BorderSide(color: Theme.of(context).primaryColor),
               ),
@@ -29,15 +27,22 @@ class Dashboard extends StatelessWidget {
               )),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
+            children: [
               ...viewModel.bottomNavItems
                   .asMap()
                   .entries
                   .map((entry) => GestureDetector(
                         onTap: () => viewModel.setActiveIndex(entry.key),
-                        child: BottomNavItem(
-                          item: entry.value,
-                          isActive: viewModel.activeIndex == entry.key,
+                        child: Container(
+                          height: double.infinity,
+                          alignment: Alignment.center,
+                          color: Colors.transparent,
+                          padding: EdgeInsets.symmetric(
+                              vertical: 10, horizontal: 20),
+                          child: BottomNavItem(
+                            item: entry.value,
+                            isActive: viewModel.activeIndex == entry.key,
+                          ),
                         ),
                       ))
             ],

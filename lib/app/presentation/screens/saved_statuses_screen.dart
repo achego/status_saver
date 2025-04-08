@@ -1,56 +1,84 @@
 import 'package:flutter/material.dart';
-import 'package:status_saver/app/models/status_model.dart';
+import 'package:provider/provider.dart';
 import 'package:status_saver/app/presentation/components/status_grid.dart';
-import 'package:status_saver/core/utils/file_utils.dart';
+import 'package:status_saver/app/presentation/components/theme_icon.dart';
+import 'package:status_saver/app/shared/components/function_widgets.dart';
+import 'package:status_saver/app/view_models/status_view_model.dart';
+import 'package:status_saver/core/utils/app_assets.dart';
 
-class SavedStatusesScreen extends StatefulWidget {
+class SavedStatusesScreen extends StatelessWidget {
   const SavedStatusesScreen({super.key});
 
   @override
-  State<SavedStatusesScreen> createState() => _SavedStatusesScreenState();
-}
-
-class _SavedStatusesScreenState extends State<SavedStatusesScreen> {
-  List<StatusModel> _savedStatuses = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSavedStatuses();
-  }
-
-  Future<void> _loadSavedStatuses() async {
-    setState(() => _isLoading = true);
-
-    try {
-      final savedFiles = await FileUtils.getSavedStatuses();
-      _savedStatuses = savedFiles.map((file) {
-        final isVideo = file.path.endsWith('.mp4');
-        return StatusModel(
-          path: file.path,
-          type: isVideo ? StatusType.video : StatusType.image,
-          modifiedTime: file.lastModifiedSync(),
-        );
-      }).toList();
-    } catch (e) {
-      debugPrint('Error loading saved statuses: $e');
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Saved Statuses'),
-      ),
-      body: StatusGrid(
-        statuses: _savedStatuses,
-        isLoading: _isLoading,
-        onRefresh: _loadSavedStatuses,
-      ),
-    );
+    return Consumer<StatusViewModel>(builder: (context, viewModel, child) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Saved Statuses'),
+          actions: [
+            ThemeIcon(),
+          ],
+        ),
+        body: DefaultTabController(
+          length: 2,
+          child: Column(
+            children: [
+              TabBar(
+                tabs: [
+                  Container(
+                    padding: EdgeInsets.all(10),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        svgAsset(AppSvgs.image),
+                        SizedBox(width: 10),
+                        Text('Images',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w600))
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.all(10),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        svgAsset(AppSvgs.video),
+                        SizedBox(width: 10),
+                        Text('Videos',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w600))
+                      ],
+                    ),
+                  ),
+                ],
+                labelStyle: Theme.of(context).textTheme.bodyLarge,
+                indicatorColor: Theme.of(context).primaryColor,
+              ),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    StatusGrid(
+                      statuses: viewModel.imageStatuses,
+                      isLoading: viewModel.isLoading,
+                      onRefresh: viewModel.refreshStatuses,
+                    ),
+                    StatusGrid(
+                      statuses: viewModel.videoStatuses,
+                      isLoading: viewModel.isLoading,
+                      onRefresh: viewModel.refreshStatuses,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 }

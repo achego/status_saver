@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:status_saver/app/models/status_model.dart';
-import 'package:status_saver/app/presentation/components/image_viewer_actions.dart';
+import 'package:status_saver/app/presentation/components/media_viewer_actions.dart';
 
 class ImageViewer extends StatefulWidget {
   const ImageViewer({
@@ -21,6 +21,8 @@ class ImageViewer extends StatefulWidget {
 class _ImageViewerState extends State<ImageViewer> {
   late PageController _pageController;
   late int _currentIndex;
+  bool showActionButtons = true;
+  bool _isZoomed = false;
 
   @override
   void initState() {
@@ -35,22 +37,32 @@ class _ImageViewerState extends State<ImageViewer> {
     super.dispose();
   }
 
-  bool showActionButtons = true;
-
   toggleActionButtons() {
     setState(() => showActionButtons = !showActionButtons);
+  }
+
+  void _handleScaleStateChanged(PhotoViewScaleState scaleState) {
+    final bool wasZoomed = _isZoomed;
+    _isZoomed = scaleState != PhotoViewScaleState.initial;
+
+    if (wasZoomed != _isZoomed) {
+      setState(() {});
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           GestureDetector(
             onTap: toggleActionButtons,
             child: PageView.builder(
               allowImplicitScrolling: false,
+              physics: _isZoomed
+                  ? const NeverScrollableScrollPhysics()
+                  : const PageScrollPhysics(),
               controller: _pageController,
               onPageChanged: (index) => setState(() => _currentIndex = index),
               itemCount: widget.statuses.length,
@@ -60,31 +72,22 @@ class _ImageViewerState extends State<ImageViewer> {
                   imageProvider: FileImage(File(status.path)),
                   minScale: PhotoViewComputedScale.contained,
                   maxScale: PhotoViewComputedScale.covered * 2,
-                  backgroundDecoration:
-                      const BoxDecoration(color: Colors.black),
+                  scaleStateChangedCallback: _handleScaleStateChanged,
+                  backgroundDecoration: BoxDecoration(
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                  ),
                 );
               },
             ),
           ),
           Positioned(
-            top: MediaQuery.of(context).padding.top,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          ImageViewerActions(
+              top: MediaQuery.of(context).padding.top,
+              left: 0,
+              right: 0,
+              child: AppBar()),
+          MediaViewerActions(
             showActionButtons: showActionButtons,
-            widget: widget,
+            statuses: widget.statuses,
             pageController: _pageController,
             currentIndex: _currentIndex,
           ),

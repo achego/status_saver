@@ -28,14 +28,17 @@ class BottomNavItem extends StatelessWidget {
                     ),
                 child: SizedBox(
                     key: Key(isActive ? item.activeIcons : item.icon),
-                    child: svgAsset(isActive ? item.activeIcons : item.icon))),
+                    child: svgAsset(isActive ? item.activeIcons : item.icon,
+                        color: isActive
+                            ? Theme.of(context).primaryColor
+                            : Theme.of(context).iconTheme.color))),
           ),
         ),
         AnimatedContainer(
           duration: Duration(milliseconds: 500),
           margin: EdgeInsets.only(top: isActive ? 5 : 0),
           height: 5,
-          width: 10,
+          width: isActive ? 10 : 0,
           decoration: BoxDecoration(
             color:
                 isActive ? Theme.of(context).primaryColor : Colors.transparent,

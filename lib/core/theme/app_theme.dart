@@ -5,9 +5,10 @@ class AppTheme {
   static final ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    primaryColor: const Color(0xFFC67C4E),
+    primaryColor: const Color.fromARGB(255, 176, 78, 198),
     scaffoldBackgroundColor: Colors.white,
     bottomNavigationBarTheme: BottomNavigationBarThemeData(),
+    iconTheme: IconThemeData(color: Colors.black),
     appBarTheme: AppBarTheme(
       backgroundColor: Colors.white,
       elevation: 0,
@@ -18,6 +19,7 @@ class AppTheme {
         fontWeight: FontWeight.w600,
       ),
     ),
+    dividerTheme: DividerThemeData(color: Colors.grey.shade200),
     textTheme: TextTheme(
       displayLarge: GoogleFonts.poppins(
         color: Colors.black,
@@ -43,8 +45,9 @@ class AppTheme {
   );
 
   static final ThemeData darkTheme = lightTheme.copyWith(
+    iconTheme: IconThemeData(color: const Color.fromARGB(255, 108, 62, 118)),
     brightness: Brightness.dark,
-    primaryColor: Color(0xFFC67C4E),
+    dividerTheme: DividerThemeData(color: Colors.grey.shade800),
     scaffoldBackgroundColor: const Color(0xFF121212),
     appBarTheme: AppBarTheme(
       backgroundColor: const Color(0xFF121212),

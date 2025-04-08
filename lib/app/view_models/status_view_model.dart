@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:get_thumbnail_video/video_thumbnail.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:status_saver/app/models/status_model.dart';
 import 'package:status_saver/app/presentation/screens/home_screen.dart';
 import 'package:status_saver/app/presentation/screens/saved_statuses_screen.dart';
+import 'package:status_saver/app/presentation/screens/settings_screen.dart';
 import 'package:status_saver/core/utils/app_assets.dart';
 import 'package:status_saver/core/utils/file_utils.dart';
 // import 'package:video_thumbnail/video_thumbnail.dart';
@@ -52,7 +54,12 @@ class StatusViewModel extends ChangeNotifier {
             label: 'Favorites',
             icon: AppSvgs.fav,
             activeIcons: AppSvgs.favFilled,
-            screen: SavedStatusesScreen()),
+            screen: const SavedStatusesScreen()),
+        BottomNavItemModel(
+            label: 'Settings',
+            icon: AppSvgs.settings,
+            activeIcons: AppSvgs.settingsFilled,
+            screen: const SettingsScreen()),
       ];
 
   void setActiveIndex(int index) {
@@ -175,8 +182,13 @@ class StatusViewModel extends ChangeNotifier {
 
   Future<String?> _generateVideoThumbnail(String videoPath) async {
     try {
-      // TODO: Implement video thumbnail generation
-      return null;
+      XFile thumbnailFile = await VideoThumbnail.thumbnailFile(
+        video: videoPath,
+        thumbnailPath: (await getTemporaryDirectory()).path,
+        quality: 80,
+      );
+      print('Thumbnail path: ${thumbnailFile.path}');
+      return thumbnailFile.path;
     } catch (e) {
       debugPrint('Error generating thumbnail: $e');
       return null;

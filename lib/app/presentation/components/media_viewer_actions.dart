@@ -3,24 +3,28 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:status_saver/app/presentation/components/action_button.dart';
-import 'package:status_saver/app/presentation/screens/image_viewer.dart';
+import 'package:status_saver/app/models/status_model.dart';
+import 'package:status_saver/app/presentation/components/video_progress_bar.dart';
 import 'package:status_saver/app/view_models/status_view_model.dart';
 import 'package:status_saver/core/utils/app_assets.dart';
+import 'package:video_player/video_player.dart';
 
-class ImageViewerActions extends StatelessWidget {
-  const ImageViewerActions({
+class MediaViewerActions extends StatelessWidget {
+  const MediaViewerActions({
     super.key,
-    required this.widget,
+    required this.statuses,
     required PageController pageController,
     required int currentIndex,
     required this.showActionButtons,
+    this.videoController,
   })  : _pageController = pageController,
         _currentIndex = currentIndex;
 
-  final ImageViewer widget;
+  final List<StatusModel> statuses;
   final PageController _pageController;
   final int _currentIndex;
   final bool showActionButtons;
+  final VideoPlayerController? videoController;
 
   @override
   Widget build(BuildContext context) {
@@ -35,18 +39,27 @@ class ImageViewerActions extends StatelessWidget {
             : Container(
                 padding: EdgeInsets.symmetric(vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: Colors.black.withValues(alpha: 0.15),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (videoController != null) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child:
+                            VideoProgressBar(videoController: videoController!),
+                      ),
+                      SizedBox(height: 5),
+                    ],
+
                     SizedBox(
                       height: 60,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        itemCount: widget.statuses.length,
+                        itemCount: statuses.length,
                         itemBuilder: (context, index) {
-                          final status = widget.statuses[index];
+                          final status = statuses[index];
                           final isActive = _currentIndex == index;
                           return GestureDetector(
                             onTap: () {
@@ -75,7 +88,7 @@ class ImageViewerActions extends StatelessWidget {
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(6),
                                     child: Image.file(
-                                      File(status.path),
+                                      File(status.thumbnailPath ?? status.path),
                                       fit: BoxFit.cover,
                                     ),
                                   ),
@@ -103,19 +116,19 @@ class ImageViewerActions extends StatelessWidget {
                             ActionButton(
                               icon: AppSvgs.share,
                               onTap: () => viewModel.shareStatus(
-                                  context, widget.statuses[_currentIndex]),
+                                  context, statuses[_currentIndex]),
                             ),
                             ActionButton(
                               icon: AppSvgs.forward,
                               onTap: () => viewModel.saveStatus(
-                                  context, widget.statuses[_currentIndex]),
+                                  context, statuses[_currentIndex]),
                             ),
                             ActionButton(
                               icon: AppSvgs.delete,
                               color: Colors.red,
                               onTap: () => viewModel.deleteStatus(
                                 context,
-                                widget.statuses[_currentIndex],
+                                statuses[_currentIndex],
                               ),
                             ),
                           ],
