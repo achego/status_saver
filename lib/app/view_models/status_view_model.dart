@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get_thumbnail_video/video_thumbnail.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:status_saver/app/models/status_model.dart';
 import 'package:status_saver/app/presentation/screens/home_screen.dart';
@@ -67,11 +66,7 @@ class StatusViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  StatusViewModel() {
-    _initializeAndLoadStatuses();
-  }
-
-  Future<void> _initializeAndLoadStatuses() async {
+  Future<void> initializeAndLoadStatuses() async {
     await refreshStatuses();
   }
 
@@ -87,12 +82,6 @@ class StatusViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final externalStorage = await Permission.manageExternalStorage.request();
-      if (!externalStorage.isGranted) {
-        openAppSettings();
-        return;
-      }
-
       final whatsappDir = await _getWhatsAppStatusDirectory();
       if (whatsappDir == null) {
         throw Exception('WhatsApp status directory not found');

@@ -5,7 +5,7 @@ class AppTheme {
   static final ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    primaryColor: const Color.fromARGB(255, 176, 78, 198),
+    primaryColor: const Color(0xFF5451D6),
     scaffoldBackgroundColor: Colors.white,
     bottomNavigationBarTheme: BottomNavigationBarThemeData(),
     iconTheme: IconThemeData(color: Colors.black),

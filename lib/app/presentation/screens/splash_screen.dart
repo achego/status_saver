@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:status_saver/app/presentation/screens/main_screen.dart';
+import 'package:status_saver/app/presentation/screens/dashboard.dart';
+import 'package:status_saver/app/shared/components/custom_button.dart';
+import 'package:status_saver/app/shared/components/dialogs/permision_dilog.dart';
 import 'package:status_saver/app/view_models/status_view_model.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:status_saver/core/utils/app_assets.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,6 +16,8 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   bool _isLoading = true;
+  bool? _isPermissionGranted;
+  int tries = 0;
 
   @override
   void initState() {
@@ -21,156 +26,150 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _initialize() async {
-    final viewModel = Provider.of<StatusViewModel>(context, listen: false);
+    final viewModel = context.read<StatusViewModel>();
 
-    // Request storage permission
-    final status = await Permission.manageExternalStorage.request();
-    if (status.isDenied) {
-      if (mounted) {
-        _showPermissionDialog();
+    final permissionStatus = await Permission.manageExternalStorage.isGranted;
+    setState(() {
+      _isPermissionGranted = permissionStatus;
+    });
+    if (!permissionStatus) {
+      if (tries <= 0) {
+        return;
       }
-      return;
+
+      final granted = await _showPermissionDialog();
+      setState(() {
+        _isPermissionGranted = granted;
+      });
+      if (granted) {
+        final status = await Permission.manageExternalStorage.request();
+        setState(() {
+          _isPermissionGranted = status.isGranted;
+        });
+        if (!status.isGranted) {
+          return;
+        }
+      } else {
+        return;
+      }
     }
 
-    // Load statuses
     await viewModel.refreshStatuses();
     await viewModel.getSavedStatuses();
 
     if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const MainScreen()),
-      );
+      await Future.delayed(const Duration(seconds: 1));
+      // Navigator.of(context).pushReplacement(
+      //   MaterialPageRoute(builder: (context) => const Dashboard()),
+      // );
     }
   }
 
-  void _showPermissionDialog() {
-    showDialog(
+  Future<bool> _showPermissionDialog() async {
+    final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Storage Permission Required'),
-        content: const Text(
-          'Status Saver needs storage permission to access and save WhatsApp statuses. Please grant permission in settings.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              openAppSettings();
-            },
-            child: const Text('Open Settings'),
-          ),
-          TextButton(
-            onPressed: () {
-              _initialize(); // Retry permission request
-            },
-            child: const Text('Retry'),
-          ),
-        ],
-      ),
+      builder: (context) => const PermissionModal(),
     );
+    return result ?? false;
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final contentHeight = screenHeight * 0.6;
+    final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          // Background Image
-          Image.asset(
-            'assets/images/splash_bg.jpg',
-            fit: BoxFit.cover,
-          ),
-          // Gradient Overlay
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withOpacity(0.7),
-                  Colors.black.withOpacity(0.9),
-                ],
-              ),
-            ),
-          ),
-          // Content
-          SafeArea(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Spacer(),
-                // Title
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Fall in Love with',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineMedium
-                            ?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Status Saver in Blissful Delight!',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineMedium
-                            ?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                        textAlign: TextAlign.center,
-                      ),
+        backgroundColor: Colors.black,
+        body: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Theme.of(context).colorScheme.primary,
+                      Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withValues(alpha: 0.7)
                     ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
                 ),
-                const SizedBox(height: 16),
-                // Subtitle
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Text(
-                    'Welcome to our cozy status corner, where every status is a delight for you.',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.white.withOpacity(0.7),
-                        ),
-                    textAlign: TextAlign.center,
+              ),
+              Column(
+                children: [
+                  SizedBox(
+                    height: screenHeight - contentHeight,
+                    child: SizedBox(
+                      width: screenWidth * 0.6,
+                      child: Image.asset(AppImages.splashBg),
+                    ),
                   ),
-                ),
-                const Spacer(),
-                // Loading Indicator
-                if (_isLoading)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 32),
+                  Container(
+                    height: contentHeight,
+                    alignment: Alignment.bottomCenter,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                      borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(30),
+                        topLeft: Radius.circular(30),
+                      ),
+                    ),
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const CircularProgressIndicator(
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                        const SizedBox(height: 16),
+                        Expanded(
+                            child: Center(
+                          child: CircularProgressIndicator(
+                            strokeCap: StrokeCap.round,
+                          ),
+                        )),
                         Text(
-                          'Loading your statuses...',
+                          'Whatsapp Status Saver',
+                          textAlign: TextAlign.center,
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white.withOpacity(0.7),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 25,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .displayLarge
+                                        ?.color,
                                   ),
                         ),
+                        SizedBox(height: 10),
+                        Text(
+                          'Save your favorite statuses from WhatsApp and share them with your friends.',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        SizedBox(height: 50),
+                        CustomButton(
+                          title: _isPermissionGranted == null
+                              ? 'Get Started'
+                              : (_isPermissionGranted! ? 'Welcome' : 'Retry'),
+                          onTap: () {
+                            if (_isPermissionGranted == null) {
+                              tries += 1;
+                            }
+                            _initialize();
+                          },
+                        ),
+                        SizedBox(height: 50),
                       ],
                     ),
                   ),
-              ],
-            ),
+                ],
+              )
+            ],
           ),
-        ],
-      ),
-    );
+        ));
   }
 }

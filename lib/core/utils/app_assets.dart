@@ -1,7 +1,9 @@
 const String baseIconSvgPath = 'assets/svgs/';
+const String baseImageSvgPath = 'assets/images/';
 
 extension ImageExtension on String {
   String get svg => '$baseIconSvgPath$this.svg';
+  String get png => '$baseImageSvgPath$this.png';
 }
 
 class AppSvgs {
@@ -28,4 +30,9 @@ class AppSvgs {
   static String get folder => 'folder'.svg;
   static String get email => 'email'.svg;
   static String get shield => 'shield'.svg;
+}
+
+class AppImages {
+  static String get storagePermission => 'storage_permission'.png;
+  static String get splashBg => 'splash_bg'.png;
 }

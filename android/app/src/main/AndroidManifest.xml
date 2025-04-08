@@ -9,9 +9,6 @@
       See https://developer.android.com/about/versions/13/behavior-changes-13#granular-media-permissions
       for more information.
     -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <application
         android:label="status_saver"
         android:name="${applicationName}"

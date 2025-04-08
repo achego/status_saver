@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:status_saver/app/presentation/screens/dashboard.dart';
 import 'package:status_saver/app/presentation/screens/home_screen.dart';
+import 'package:status_saver/app/presentation/screens/splash_screen.dart';
 import 'package:status_saver/app/view_models/status_view_model.dart';
 import 'package:status_saver/core/theme/app_theme.dart';
 import 'package:status_saver/core/theme/theme_provider.dart';
@@ -29,7 +30,7 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
-            home: const Dashboard(),
+            home: const SplashScreen(),
           );
         },
       ),
