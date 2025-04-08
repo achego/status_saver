@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:status_saver/app/models/status_model.dart';
 import 'package:status_saver/app/presentation/screens/home_screen.dart';
 import 'package:status_saver/app/presentation/screens/saved_statuses_screen.dart';
@@ -179,6 +180,58 @@ class StatusViewModel extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error generating thumbnail: $e');
       return null;
+    }
+  }
+
+// Image Viewer
+  Future<void> shareStatus(BuildContext context, StatusModel status) async {
+    try {
+      await Share.shareXFiles(
+        [XFile(status.path)],
+        text: 'Check out this status!',
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error sharing status: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> saveStatus(BuildContext context, StatusModel status) async {
+    try {
+      await FileUtils.saveStatus(File(status.path));
+      //
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Status saved successfully!')),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error saving status')),
+        );
+      }
+    }
+  }
+
+  Future<void> deleteStatus(BuildContext context, StatusModel status) async {
+    try {
+      await File(status.path).delete();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Status deleted successfully!')),
+        );
+        Navigator.pop(context, true); // Return true to indicate refresh needed
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error deleting status')),
+        );
+      }
     }
   }
 }

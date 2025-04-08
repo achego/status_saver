@@ -12,4 +12,7 @@ class AppSvgs {
   static String get image => 'image'.svg;
   static String get video => 'video'.svg;
   static String get download => 'download'.svg;
+  static String get share => 'share'.svg;
+  static String get forward => 'forward'.svg;
+  static String get delete => 'delete'.svg;
 }
