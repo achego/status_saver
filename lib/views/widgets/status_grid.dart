@@ -6,7 +6,7 @@ import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:status_saver/app/models/status_model.dart';
 
 class StatusGrid extends StatelessWidget {
-  final List<Status> statuses;
+  final List<StatusModel> statuses;
   final bool isLoading;
   final VoidCallback onRefresh;
 
@@ -50,7 +50,7 @@ class StatusGrid extends StatelessWidget {
 }
 
 class StatusTile extends StatelessWidget {
-  final Status status;
+  final StatusModel status;
 
   const StatusTile({
     super.key,

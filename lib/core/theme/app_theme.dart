@@ -5,8 +5,9 @@ class AppTheme {
   static final ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    primaryColor: Colors.blue,
+    primaryColor: const Color(0xFFC67C4E),
     scaffoldBackgroundColor: Colors.white,
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(),
     appBarTheme: AppBarTheme(
       backgroundColor: Colors.white,
       elevation: 0,
@@ -41,10 +42,9 @@ class AppTheme {
     ),
   );
 
-  static final ThemeData darkTheme = ThemeData(
-    useMaterial3: true,
+  static final ThemeData darkTheme = lightTheme.copyWith(
     brightness: Brightness.dark,
-    primaryColor: Colors.blue,
+    primaryColor: Color(0xFFC67C4E),
     scaffoldBackgroundColor: const Color(0xFF121212),
     appBarTheme: AppBarTheme(
       backgroundColor: const Color(0xFF121212),

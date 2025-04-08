@@ -1,20 +1,63 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:status_saver/app/models/status_model.dart';
+import 'package:status_saver/app/presentation/screens/home_screen.dart';
+import 'package:status_saver/app/presentation/screens/saved_statuses_screen.dart';
+import 'package:status_saver/core/utils/app_assets.dart';
+import 'package:status_saver/core/utils/file_utils.dart';
 // import 'package:video_thumbnail/video_thumbnail.dart';
+
+class BottomNavItemModel {
+  final String label;
+  final String icon;
+  final String activeIcons;
+  final Widget screen;
+
+  BottomNavItemModel(
+      {required this.label,
+      required this.icon,
+      required this.activeIcons,
+      required this.screen});
+}
 
 class StatusViewModel extends ChangeNotifier {
   bool _isLoading = false;
-  List<Status> _statuses = [];
+  List<StatusModel> _statuses = [];
   String? _error;
+  List<StatusModel> savedStatuses = [];
+
+  List<StatusModel> get savedImageStatuses =>
+      savedStatuses.where((s) => s.isImage).toList();
+  List<StatusModel> get savedVideoStatuses =>
+      savedStatuses.where((s) => s.isVideo).toList();
 
   bool get isLoading => _isLoading;
-  List<Status> get imageStatuses => _statuses.where((s) => s.isImage).toList();
-  List<Status> get videoStatuses => _statuses.where((s) => s.isVideo).toList();
-  String? get error => _error;
+  List<StatusModel> get imageStatuses =>
+      _statuses.where((s) => s.isImage).toList();
+  List<StatusModel> get videoStatuses =>
+      _statuses.where((s) => s.isVideo).toList();
+
+  int activeIndex = 0;
+
+  List<BottomNavItemModel> get bottomNavItems => [
+        BottomNavItemModel(
+            label: 'Home',
+            icon: AppSvgs.home,
+            activeIcons: AppSvgs.homeFilled,
+            screen: const HomeScreen()),
+        BottomNavItemModel(
+            label: 'Favorites',
+            icon: AppSvgs.fav,
+            activeIcons: AppSvgs.favFilled,
+            screen: SavedStatusesScreen()),
+      ];
+
+  void setActiveIndex(int index) {
+    activeIndex = index;
+    notifyListeners();
+  }
 
   StatusViewModel() {
     _initializeAndLoadStatuses();
@@ -22,6 +65,12 @@ class StatusViewModel extends ChangeNotifier {
 
   Future<void> _initializeAndLoadStatuses() async {
     await refreshStatuses();
+  }
+
+  Future<void> getSavedStatuses() async {
+    final statuses = await FileUtils.getSavedStatuses();
+    savedStatuses = await _processStatusFiles(statuses);
+    notifyListeners();
   }
 
   Future<void> refreshStatuses() async {
@@ -57,65 +106,6 @@ class StatusViewModel extends ChangeNotifier {
       final directory = await getApplicationDocumentsDirectory();
 
       final baseDir = directory.path.split('Android')[0];
-      Directory(baseDir).listSync().forEach(
-        (element) {
-          print(element.path);
-        },
-      );
-      final whatsappDir = Directory(
-          '$baseDir/Android/media/com.whatsapp/WhatsApp/Media/.Statuses');
-
-      if (!whatsappDir.existsSync()) {
-        // Try alternative path for newer Android versions
-        final altWhatsappDir = Directory(
-            '/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/.Statuses');
-        if (altWhatsappDir.existsSync()) {
-          return altWhatsappDir;
-        }
-        return null;
-      }
-
-      return whatsappDir;
-    }
-    return null;
-  }
-
-  Future<Directory?> showDirectory() async {
-    if (Platform.isAndroid) {
-      final directory = await getExternalStorageDirectory();
-
-      if (directory == null) {
-        return null;
-      }
-
-      final baseDir = directory.path.split('Android')[0];
-      final me = await Directory(baseDir).list();
-      // Android/media/com.whatsapp/WhatsApp/Media/
-      // print(me);
-      final path =
-          '${baseDir}Android/media/com.whatsapp/WhatsApp/Media/.Statuses';
-      print(path);
-      Directory(path).listSync().forEach((element) {
-        if (element is File) {
-          print('File found: ${element.path}');
-
-          if (element.path.endsWith('.jpg') ||
-              element.path.endsWith('.png') ||
-              element.path.endsWith('.mp4') ||
-              element.path.endsWith('.avi')) {
-            print('Image/Video file found: ${element.path}');
-          }
-        }
-        // Check if the element is a hidden directory
-        else if (element is Directory) {
-          // If the directory is hidden (starts with a dot)
-          if (element.path.startsWith('.')) {
-            print('Hidden Directory: ${element.path}');
-          } else {
-            print('Directory: ${element.path}');
-          }
-        }
-      });
       final whatsappDir = Directory(
           '$baseDir/Android/media/com.whatsapp/WhatsApp/Media/.Statuses');
 
@@ -139,9 +129,6 @@ class StatusViewModel extends ChangeNotifier {
 
     try {
       final files = directory.listSync();
-      debugPrint('Found ${files.length} files in directory');
-      files.forEach((file) => debugPrint('File: ${file.path}'));
-
       return files
           .where((entity) =>
               entity is File &&
@@ -155,8 +142,9 @@ class StatusViewModel extends ChangeNotifier {
     }
   }
 
-  Future<List<Status>> _processStatusFiles(List<FileSystemEntity> files) async {
-    final statuses = <Status>[];
+  Future<List<StatusModel>> _processStatusFiles(
+      List<FileSystemEntity> files) async {
+    final statuses = <StatusModel>[];
 
     for (final file in files) {
       if (file is! File) continue;
@@ -166,14 +154,14 @@ class StatusViewModel extends ChangeNotifier {
 
       if (path.endsWith('.mp4')) {
         final thumbnailPath = await _generateVideoThumbnail(path);
-        statuses.add(Status(
+        statuses.add(StatusModel(
           path: path,
           type: StatusType.video,
           modifiedTime: modifiedTime,
           thumbnailPath: thumbnailPath,
         ));
       } else if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
-        statuses.add(Status(
+        statuses.add(StatusModel(
           path: path,
           type: StatusType.image,
           modifiedTime: modifiedTime,
