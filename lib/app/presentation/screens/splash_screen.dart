@@ -15,7 +15,6 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  bool _isLoading = true;
   bool? _isPermissionGranted;
   int tries = 0;
 
@@ -57,11 +56,11 @@ class _SplashScreenState extends State<SplashScreen> {
     await viewModel.refreshStatuses();
     await viewModel.getSavedStatuses();
 
+    await Future.delayed(const Duration(seconds: 1));
     if (mounted) {
-      await Future.delayed(const Duration(seconds: 1));
-      // Navigator.of(context).pushReplacement(
-      //   MaterialPageRoute(builder: (context) => const Dashboard()),
-      // );
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const Dashboard()),
+      );
     }
   }
 

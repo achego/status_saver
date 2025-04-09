@@ -1,9 +1,6 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// import 'package:image_gallery_saver/image_gallery_saver.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:status_saver/app/models/status_model.dart';
 import 'package:status_saver/app/presentation/screens/image_viewer.dart';
 import 'package:status_saver/app/presentation/screens/video_viewer.dart';
@@ -11,7 +8,6 @@ import 'package:status_saver/app/shared/components/function_widgets.dart';
 import 'package:status_saver/app/view_models/status_view_model.dart';
 import 'package:status_saver/core/utils/app_assets.dart';
 import 'package:status_saver/core/utils/date_time_extension.dart';
-import 'package:status_saver/core/utils/file_utils.dart';
 
 class StatusTile extends StatelessWidget {
   final StatusModel status;
@@ -25,6 +21,7 @@ class StatusTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final viewModel = context.read<StatusViewModel>();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -33,7 +30,6 @@ class StatusTile extends StatelessWidget {
           child: Stack(
             children: [
               Container(
-                // clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(17),
                   border: Border.all(
@@ -61,7 +57,7 @@ class StatusTile extends StatelessWidget {
                   right: 0,
                   bottom: 0,
                   child: InkWell(
-                    onTap: () => _saveStatus(context),
+                    onTap: () => viewModel.saveStatus(context, status),
                     child: Padding(
                       padding: EdgeInsets.all(10),
                       child: Container(
@@ -111,40 +107,6 @@ class StatusTile extends StatelessWidget {
     );
   }
 
-  Future<void> _saveStatus(BuildContext context) async {
-    try {
-      final savedPath = await FileUtils.saveStatus(File(status.path));
-      print(savedPath);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Status saved successfully!')),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('An error occurred while saving the status')),
-        );
-      }
-    }
-  }
-
-  Future<void> _shareStatus(BuildContext context) async {
-    try {
-      await Share.shareXFiles(
-        [XFile(status.path)],
-        text: 'Check out this ${status.isVideo ? 'video' : 'image'} status!',
-      );
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error sharing status: $e')),
-        );
-      }
-    }
-  }
-
   void _handleFileAction(BuildContext context) {
     switch (status.type) {
       case StatusType.image:
@@ -157,34 +119,34 @@ class StatusTile extends StatelessWidget {
   }
 
   void _navigateToVideoViewer(BuildContext context) {
+    final viewModel = context.read<StatusViewModel>();
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => VideoViewer(
           currentStatus: status,
-          statuses: context.read<StatusViewModel>().videoStatuses,
+          statuses: status.isFromSaved(context)
+              ? viewModel.savedVideoStatuses
+              : viewModel.videoStatuses,
         ),
       ),
-    ).then((shouldRefresh) {
-      if (shouldRefresh == true) {
-        context.read<StatusViewModel>().refreshStatuses();
-      }
-    });
+    );
+    context.read<StatusViewModel>().refreshStatuses();
   }
 
   void _navigateToImageViewer(BuildContext context) {
+    final viewModel = context.read<StatusViewModel>();
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ImageViewer(
           currentStatus: status,
-          statuses: context.read<StatusViewModel>().imageStatuses,
+          statuses: status.isFromSaved(context)
+              ? viewModel.savedImageStatuses
+              : viewModel.imageStatuses,
         ),
       ),
-    ).then((shouldRefresh) {
-      if (shouldRefresh == true) {
-        context.read<StatusViewModel>().refreshStatuses();
-      }
-    });
+    );
+    context.read<StatusViewModel>().refreshStatuses();
   }
 }

@@ -39,6 +39,7 @@ class _VideoViewerState extends State<VideoViewer> {
 
     try {
       await _videoController.initialize();
+      _videoController.play();
       await _videoController.setLooping(true);
       if (mounted) {
         setState(() {
@@ -48,7 +49,7 @@ class _VideoViewerState extends State<VideoViewer> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading video: $e')),
+          SnackBar(content: Text('Error loading video')),
         );
       }
     }

@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:status_saver/app/view_models/status_view_model.dart';
+import 'package:status_saver/core/utils/file_utils.dart';
 
 enum StatusType { image, video }
 
@@ -22,15 +25,20 @@ class StatusModel {
 
   bool isSaved(BuildContext context) {
     for (var status in context.read<StatusViewModel>().savedStatuses) {
-      print('============================');
-      print(status.path);
-      print(path);
-      print(status.path == path);
-      print('============================');
-      if (status.path == path) {
+      final originalFile = File(status.path);
+      final currentFile = File(path);
+      if (FileUtils.areFilesIdentical(originalFile, currentFile)) {
         return true;
       }
     }
     return false;
+  }
+
+  bool isFromSaved(BuildContext context) {
+    final contains = context
+        .read<StatusViewModel>()
+        .savedStatuses
+        .where((status) => status.path == path);
+    return contains.isNotEmpty;
   }
 }

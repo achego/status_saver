@@ -28,6 +28,7 @@ class MediaViewerActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final status = statuses[_currentIndex];
     return Positioned(
       bottom: 0,
       left: 0,
@@ -115,21 +116,35 @@ class MediaViewerActions extends StatelessWidget {
                           children: [
                             ActionButton(
                               icon: AppSvgs.share,
-                              onTap: () => viewModel.shareStatus(
-                                  context, statuses[_currentIndex]),
+                              onTap: () =>
+                                  viewModel.shareStatus(context, status),
                             ),
                             ActionButton(
                               icon: AppSvgs.forward,
-                              onTap: () => viewModel.saveStatus(
-                                  context, statuses[_currentIndex]),
+                              onTap: () =>
+                                  viewModel.repostStatus(context, status),
                             ),
                             ActionButton(
-                              icon: AppSvgs.delete,
-                              color: Colors.red,
-                              onTap: () => viewModel.deleteStatus(
-                                context,
-                                statuses[_currentIndex],
-                              ),
+                              icon: status.isFromSaved(context)
+                                  ? AppSvgs.delete
+                                  : (status.isSaved(context)
+                                      ? AppSvgs.favFilled
+                                      : AppSvgs.download),
+                              color:
+                                  !status.isSaved(context) ? null : Colors.red,
+                              onTap: () {
+                                if (status.isFromSaved(context)) {
+                                  viewModel.deleteStatus(
+                                    context,
+                                    status,
+                                  );
+                                } else if (!status.isSaved(context)) {
+                                  viewModel.saveStatus(
+                                    context,
+                                    status,
+                                  );
+                                }
+                              },
                             ),
                           ],
                         ),

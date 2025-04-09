@@ -44,33 +44,22 @@ class FileUtils {
     return files;
   }
 
-  // static Future<bool> isStatusSaved(String originalPath) async {
-  //   final savedDir = await getSavedStatusesDirectory();
-  //   if (!await savedDir.exists()) return false;
+  static bool areFilesIdentical(File file1, File file2) {
+    try {
+      if (file1.lengthSync() != file2.lengthSync()) return false;
 
-  //   final files = await getSavedStatuses();
-  //   final originalFile = File(originalPath);
+      final bytes1 = file1.readAsBytesSync();
+      final bytes2 = file2.readAsBytesSync();
 
-  //   for (final savedFile in files) {
-  //     if (await _areFilesIdentical(originalFile, savedFile)) {
-  //       return true;
-  //     }
-  //   }
-  //   return false;
-  // }
+      if (bytes1.length != bytes2.length) return false;
 
-  // static Future<bool> _areFilesIdentical(File file1, File file2) async {
-  //   if (await file1.length() != await file2.length()) return false;
+      for (var i = 0; i < bytes1.length; i++) {
+        if (bytes1[i] != bytes2[i]) return false;
+      }
 
-  //   final bytes1 = await file1.readAsBytes();
-  //   final bytes2 = await file2.readAsBytes();
-
-  //   if (bytes1.length != bytes2.length) return false;
-
-  //   for (var i = 0; i < bytes1.length; i++) {
-  //     if (bytes1[i] != bytes2[i]) return false;
-  //   }
-
-  //   return true;
-  // }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 }

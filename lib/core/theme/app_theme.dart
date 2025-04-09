@@ -45,7 +45,7 @@ class AppTheme {
   );
 
   static final ThemeData darkTheme = lightTheme.copyWith(
-    iconTheme: IconThemeData(color: const Color.fromARGB(255, 108, 62, 118)),
+    iconTheme: IconThemeData(color: const Color.fromARGB(255, 78, 78, 78)),
     brightness: Brightness.dark,
     dividerTheme: DividerThemeData(color: Colors.grey.shade800),
     scaffoldBackgroundColor: const Color(0xFF121212),

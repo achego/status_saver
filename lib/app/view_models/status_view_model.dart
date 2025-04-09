@@ -9,6 +9,7 @@ import 'package:status_saver/app/presentation/screens/saved_statuses_screen.dart
 import 'package:status_saver/app/presentation/screens/settings_screen.dart';
 import 'package:status_saver/core/utils/app_assets.dart';
 import 'package:status_saver/core/utils/file_utils.dart';
+import 'package:url_launcher/url_launcher.dart';
 // import 'package:video_thumbnail/video_thumbnail.dart';
 
 class BottomNavItemModel {
@@ -68,6 +69,7 @@ class StatusViewModel extends ChangeNotifier {
 
   Future<void> initializeAndLoadStatuses() async {
     await refreshStatuses();
+    getSavedStatuses();
   }
 
   Future<void> getSavedStatuses() async {
@@ -77,7 +79,7 @@ class StatusViewModel extends ChangeNotifier {
   }
 
   Future<void> refreshStatuses() async {
-    _isLoading = true;
+    _isLoading = _statuses.isEmpty ? true : false;
     _error = null;
     notifyListeners();
 
@@ -91,7 +93,6 @@ class StatusViewModel extends ChangeNotifier {
       _statuses = await _processStatusFiles(statusFiles);
     } catch (e) {
       _error = e.toString();
-      print(_error);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -194,7 +195,7 @@ class StatusViewModel extends ChangeNotifier {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error sharing status: $e')),
+          SnackBar(content: Text('Error sharing status')),
         );
       }
     }
@@ -203,12 +204,7 @@ class StatusViewModel extends ChangeNotifier {
   Future<void> saveStatus(BuildContext context, StatusModel status) async {
     try {
       await FileUtils.saveStatus(File(status.path));
-      //
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Status saved successfully!')),
-        );
-      }
+      initializeAndLoadStatuses();
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -218,14 +214,33 @@ class StatusViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> repostStatus(BuildContext context, StatusModel status) async {
+    try {
+      // final uri = Uri.parse('whatsapp://send?text=');
+      final file = File(status.path);
+      final uri = Uri.parse(
+          "whatsapp://send?phone=+2348108888888&text=Check%20this%20image&file=${file.path}");
+
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+      } else {
+        throw 'Could not launch WhatsApp';
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error opening WhatsApp')),
+        );
+      }
+    }
+  }
+
   Future<void> deleteStatus(BuildContext context, StatusModel status) async {
     try {
       await File(status.path).delete();
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Status deleted successfully!')),
-        );
-        Navigator.pop(context, true); // Return true to indicate refresh needed
+        Navigator.pop(context); // Return true to indicate refresh needed
+        initializeAndLoadStatuses();
       }
     } catch (e) {
       if (context.mounted) {

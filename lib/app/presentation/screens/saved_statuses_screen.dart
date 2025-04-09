@@ -63,12 +63,12 @@ class SavedStatusesScreen extends StatelessWidget {
                 child: TabBarView(
                   children: [
                     StatusGrid(
-                      statuses: viewModel.imageStatuses,
+                      statuses: viewModel.savedImageStatuses,
                       isLoading: viewModel.isLoading,
                       onRefresh: viewModel.refreshStatuses,
                     ),
                     StatusGrid(
-                      statuses: viewModel.videoStatuses,
+                      statuses: viewModel.savedVideoStatuses,
                       isLoading: viewModel.isLoading,
                       onRefresh: viewModel.refreshStatuses,
                     ),

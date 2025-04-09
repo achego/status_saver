@@ -28,9 +28,19 @@ class StatusGrid extends StatelessWidget {
 
     if (statuses.isEmpty) {
       return Center(
-        child: Text(
-          'No statuses found',
-          style: Theme.of(context).textTheme.bodyLarge,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'No statuses found',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            SizedBox(height: 16),
+            TextButton(
+              onPressed: onRefresh,
+              child: Text('Refresh'),
+            )
+          ],
         ),
       );
     }
@@ -40,7 +50,8 @@ class StatusGrid extends StatelessWidget {
       color: Colors.white,
       onRefresh: () async => onRefresh(),
       child: MasonryGridView.count(
-        physics: const BouncingScrollPhysics(),
+        physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics()),
         crossAxisCount: 2,
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
