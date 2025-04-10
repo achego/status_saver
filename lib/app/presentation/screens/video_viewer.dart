@@ -29,12 +29,12 @@ class _VideoViewerState extends State<VideoViewer> {
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.statuses.indexOf(widget.currentStatus);
-    _pageController = PageController(initialPage: _currentIndex);
     _initializeVideo(widget.currentStatus);
   }
 
   Future<void> _initializeVideo(StatusModel status) async {
+    _currentIndex = widget.statuses.indexOf(status);
+    _pageController = PageController(initialPage: _currentIndex);
     _videoController = VideoPlayerController.file(File(status.path));
 
     try {
@@ -156,6 +156,17 @@ class _VideoViewerState extends State<VideoViewer> {
             statuses: widget.statuses,
             pageController: _pageController,
             currentIndex: _currentIndex,
+            onStatusAction: () => setState(
+              () {
+                widget.statuses.removeAt(_currentIndex);
+                if (widget.statuses.isNotEmpty) {
+                  if (_currentIndex > widget.statuses.length - 1) {
+                    _currentIndex = widget.statuses.length - 1;
+                  }
+                  _initializeVideo(widget.statuses[_currentIndex]);
+                }
+              },
+            ),
           ),
         ],
       ),

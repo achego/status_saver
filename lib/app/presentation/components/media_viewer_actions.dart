@@ -9,7 +9,7 @@ import 'package:status_saver/app/view_models/status_view_model.dart';
 import 'package:status_saver/core/utils/app_assets.dart';
 import 'package:video_player/video_player.dart';
 
-class MediaViewerActions extends StatelessWidget {
+class MediaViewerActions extends StatefulWidget {
   const MediaViewerActions({
     super.key,
     required this.statuses,
@@ -17,6 +17,7 @@ class MediaViewerActions extends StatelessWidget {
     required int currentIndex,
     required this.showActionButtons,
     this.videoController,
+    this.onStatusAction,
   })  : _pageController = pageController,
         _currentIndex = currentIndex;
 
@@ -25,17 +26,30 @@ class MediaViewerActions extends StatelessWidget {
   final int _currentIndex;
   final bool showActionButtons;
   final VideoPlayerController? videoController;
+  final VoidCallback? onStatusAction;
 
   @override
+  State<MediaViewerActions> createState() => _MediaViewerActionsState();
+}
+
+class _MediaViewerActionsState extends State<MediaViewerActions> {
+  bool isSaving = false;
+  @override
   Widget build(BuildContext context) {
-    final status = statuses[_currentIndex];
+    StatusModel status;
+    try {
+      status = widget.statuses[widget._currentIndex];
+    } catch (e) {
+      status = StatusModel(
+          path: '', type: StatusType.image, modifiedTime: DateTime.now());
+    }
     return Positioned(
       bottom: 0,
       left: 0,
       right: 0,
       child: AnimatedSwitcher(
         duration: Duration(milliseconds: 400),
-        child: !showActionButtons
+        child: !widget.showActionButtons
             ? SizedBox.shrink()
             : Container(
                 padding: EdgeInsets.symmetric(vertical: 6),
@@ -45,11 +59,11 @@ class MediaViewerActions extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (videoController != null) ...[
+                    if (widget.videoController != null) ...[
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child:
-                            VideoProgressBar(videoController: videoController!),
+                        child: VideoProgressBar(
+                            videoController: widget.videoController!),
                       ),
                       SizedBox(height: 5),
                     ],
@@ -58,13 +72,13 @@ class MediaViewerActions extends StatelessWidget {
                       height: 60,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        itemCount: statuses.length,
+                        itemCount: widget.statuses.length,
                         itemBuilder: (context, index) {
-                          final status = statuses[index];
-                          final isActive = _currentIndex == index;
+                          final status = widget.statuses[index];
+                          final isActive = widget._currentIndex == index;
                           return GestureDetector(
                             onTap: () {
-                              _pageController.jumpToPage(index);
+                              widget._pageController.jumpToPage(index);
                             },
                             child: AnimatedScale(
                               duration: const Duration(milliseconds: 200),
@@ -125,6 +139,7 @@ class MediaViewerActions extends StatelessWidget {
                                   viewModel.repostStatus(context, status),
                             ),
                             ActionButton(
+                              isLoading: isSaving,
                               icon: status.isFromSaved(context)
                                   ? AppSvgs.delete
                                   : (status.isSaved(context)
@@ -132,17 +147,26 @@ class MediaViewerActions extends StatelessWidget {
                                       : AppSvgs.download),
                               color:
                                   !status.isSaved(context) ? null : Colors.red,
-                              onTap: () {
+                              onTap: () async {
+                                setState(() => isSaving = true);
                                 if (status.isFromSaved(context)) {
-                                  viewModel.deleteStatus(
+                                  await viewModel.deleteStatus(
                                     context,
                                     status,
                                   );
+                                  // widget.statuses
+                                  //     .removeAt(widget._currentIndex);
+                                  setState(() {});
                                 } else if (!status.isSaved(context)) {
-                                  viewModel.saveStatus(
+                                  await viewModel.saveStatus(
                                     context,
                                     status,
                                   );
+                                }
+                                setState(() => isSaving = false);
+                                widget.onStatusAction?.call();
+                                if (widget.statuses.isEmpty) {
+                                  Navigator.pop(context);
                                 }
                               },
                             ),

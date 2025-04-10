@@ -69,12 +69,12 @@ class StatusViewModel extends ChangeNotifier {
 
   Future<void> initializeAndLoadStatuses() async {
     await refreshStatuses();
-    getSavedStatuses();
+    await getSavedStatuses();
   }
 
   Future<void> getSavedStatuses() async {
     final statuses = await FileUtils.getSavedStatuses();
-    savedStatuses = await _processStatusFiles(statuses);
+    savedStatuses = await _processStatusFiles(statuses, savedStatuses);
     notifyListeners();
   }
 
@@ -90,10 +90,12 @@ class StatusViewModel extends ChangeNotifier {
       }
 
       final statusFiles = await _getStatusFiles(whatsappDir);
-      _statuses = await _processStatusFiles(statusFiles);
+
+      _statuses = await _processStatusFiles(statusFiles, _statuses);
+      _isLoading = false;
+      notifyListeners();
     } catch (e) {
       _error = e.toString();
-    } finally {
       _isLoading = false;
       notifyListeners();
     }
@@ -126,7 +128,7 @@ class StatusViewModel extends ChangeNotifier {
     if (!directory.existsSync()) return [];
 
     try {
-      final files = directory.listSync();
+      final files = await directory.list().toList();
       return files
           .where((entity) =>
               entity is File &&
@@ -141,7 +143,7 @@ class StatusViewModel extends ChangeNotifier {
   }
 
   Future<List<StatusModel>> _processStatusFiles(
-      List<FileSystemEntity> files) async {
+      List<FileSystemEntity> files, List<StatusModel> existingStatuses) async {
     final statuses = <StatusModel>[];
 
     for (final file in files) {
@@ -150,13 +152,19 @@ class StatusViewModel extends ChangeNotifier {
       final path = file.path;
       final modifiedTime = file.lastModifiedSync();
 
+      final existingStatus = existingStatuses.where(
+        (element) => element.path == path,
+      );
+      final exists = existingStatus.isNotEmpty;
+
       if (path.endsWith('.mp4')) {
-        final thumbnailPath = await _generateVideoThumbnail(path);
         statuses.add(StatusModel(
           path: path,
           type: StatusType.video,
           modifiedTime: modifiedTime,
-          thumbnailPath: thumbnailPath,
+          thumbnailPath: exists
+              ? existingStatus.first.thumbnailPath
+              : await _generateVideoThumbnail(path),
         ));
       } else if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
         statuses.add(StatusModel(
@@ -171,6 +179,21 @@ class StatusViewModel extends ChangeNotifier {
   }
 
   Future<String?> _generateVideoThumbnail(String videoPath) async {
+    try {
+      XFile thumbnailFile = await VideoThumbnail.thumbnailFile(
+        video: videoPath,
+        thumbnailPath: (await getTemporaryDirectory()).path,
+        quality: 80,
+      );
+      print('Thumbnail path: ${thumbnailFile.path}');
+      return thumbnailFile.path;
+    } catch (e) {
+      debugPrint('Error generating thumbnail: $e');
+      return null;
+    }
+  }
+
+  Future<String?> _generateVideoThumbnailForVideos(String videoPath) async {
     try {
       XFile thumbnailFile = await VideoThumbnail.thumbnailFile(
         video: videoPath,
@@ -204,7 +227,8 @@ class StatusViewModel extends ChangeNotifier {
   Future<void> saveStatus(BuildContext context, StatusModel status) async {
     try {
       await FileUtils.saveStatus(File(status.path));
-      initializeAndLoadStatuses();
+      await initializeAndLoadStatuses();
+      await Future.delayed(const Duration(milliseconds: 500));
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -238,9 +262,10 @@ class StatusViewModel extends ChangeNotifier {
   Future<void> deleteStatus(BuildContext context, StatusModel status) async {
     try {
       await File(status.path).delete();
+      await initializeAndLoadStatuses();
+      await Future.delayed(const Duration(milliseconds: 500));
       if (context.mounted) {
-        Navigator.pop(context); // Return true to indicate refresh needed
-        initializeAndLoadStatuses();
+        // Navigator.pop(context);
       }
     } catch (e) {
       if (context.mounted) {

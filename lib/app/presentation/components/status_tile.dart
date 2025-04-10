@@ -28,7 +28,6 @@ class _StatusTileState extends State<StatusTile> {
   bool isSaved = false;
   @override
   Widget build(BuildContext context) {
-    final viewModel = context.read<StatusViewModel>();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -39,6 +38,10 @@ class _StatusTileState extends State<StatusTile> {
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(17),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primary
+                      .withValues(alpha: 0.2),
                   border: Border.all(
                     color: Theme.of(context)
                         .colorScheme
@@ -143,10 +146,12 @@ class _StatusTileState extends State<StatusTile> {
       isSaving = true;
     });
     await viewModel.saveStatus(context, widget.status);
-    setState(() {
-      isSaving = false;
-      isSaved = true;
-    });
+    if (context.mounted) {
+      setState(() {
+        isSaving = false;
+        isSaved = true;
+      });
+    }
   }
 
   Widget _buildVideoThumbnail() {
@@ -157,8 +162,12 @@ class _StatusTileState extends State<StatusTile> {
       );
     }
     return Container(
-      color: Colors.grey,
-      child: const Icon(Icons.video_library, size: 48),
+      color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
+      // child: Icon(
+      //   Icons.video_library_rounded,
+      //   size: 35,
+      //   color: Theme.of(context).primaryColor,
+      // ),
     );
   }
 

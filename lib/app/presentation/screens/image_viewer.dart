@@ -90,6 +90,12 @@ class _ImageViewerState extends State<ImageViewer> {
             statuses: widget.statuses,
             pageController: _pageController,
             currentIndex: _currentIndex,
+            onStatusAction: () => setState(() {
+              widget.statuses.removeAt(_currentIndex);
+              if (_currentIndex > widget.statuses.length - 1) {
+                _currentIndex = widget.statuses.length - 1;
+              }
+            }),
           ),
         ],
       ),

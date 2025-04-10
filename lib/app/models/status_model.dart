@@ -41,4 +41,18 @@ class StatusModel {
         .where((status) => status.path == path);
     return contains.isNotEmpty;
   }
+
+  StatusModel copyWith({
+    String? path,
+    StatusType? type,
+    DateTime? modifiedTime,
+    String? thumbnailPath,
+  }) {
+    return StatusModel(
+      path: path ?? this.path,
+      type: type ?? this.type,
+      modifiedTime: modifiedTime ?? this.modifiedTime,
+      thumbnailPath: thumbnailPath ?? this.thumbnailPath,
+    );
+  }
 }

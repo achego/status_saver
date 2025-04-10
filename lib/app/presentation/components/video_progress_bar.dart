@@ -25,36 +25,31 @@ class _VideoProgressBarState extends State<VideoProgressBar> {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      left: 16,
-      right: 16,
-      bottom: 150,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            _formatDuration(widget.videoController.value.position),
-            style: const TextStyle(color: Colors.white),
-          ),
-          Expanded(
-              child: Slider(
-            value: widget.videoController.value.position.inSeconds.toDouble(),
-            max: widget.videoController.value.duration.inSeconds.toDouble(),
-            activeColor: Colors.white,
-            inactiveColor: Colors.white.withValues(alpha: 0.2),
-            onChanged: (value) {
-              widget.videoController.seekTo(
-                Duration(seconds: value.toInt()),
-              );
-              setState(() {});
-            },
-          )),
-          Text(
-            _formatDuration(widget.videoController.value.duration),
-            style: const TextStyle(color: Colors.white),
-          ),
-        ],
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          _formatDuration(widget.videoController.value.position),
+          style: const TextStyle(color: Colors.white),
+        ),
+        Expanded(
+            child: Slider(
+          value: widget.videoController.value.position.inSeconds.toDouble(),
+          max: widget.videoController.value.duration.inSeconds.toDouble(),
+          activeColor: Colors.white,
+          inactiveColor: Colors.white.withValues(alpha: 0.2),
+          onChanged: (value) {
+            widget.videoController.seekTo(
+              Duration(seconds: value.toInt()),
+            );
+            setState(() {});
+          },
+        )),
+        Text(
+          _formatDuration(widget.videoController.value.duration),
+          style: const TextStyle(color: Colors.white),
+        ),
+      ],
     );
   }
 
