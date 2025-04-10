@@ -7,7 +7,7 @@ class Environments {
   static const String appStoreUrl = String.fromEnvironment(
     'APP_STORE_URL',
     defaultValue:
-        'https://play.google.com/store/apps/details?id=com.belema.status_saver',
+        'https://play.google.com/store/apps/details?id=dev.belema.status_saver',
   );
 
   static const String privacyPolicyUrl = String.fromEnvironment(

@@ -28,9 +28,11 @@ class _SplashScreenState extends State<SplashScreen> {
     final viewModel = context.read<StatusViewModel>();
 
     final permissionStatus = await Permission.manageExternalStorage.isGranted;
-    setState(() {
-      _isPermissionGranted = permissionStatus;
-    });
+    if (tries > 0) {
+      setState(() {
+        _isPermissionGranted = permissionStatus;
+      });
+    }
     if (!permissionStatus) {
       if (tries <= 0) {
         return;
@@ -80,95 +82,88 @@ class _SplashScreenState extends State<SplashScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
         backgroundColor: Colors.black,
-        body: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).colorScheme.primary,
-                      Theme.of(context)
-                          .colorScheme
-                          .primary
-                          .withValues(alpha: 0.7)
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).colorScheme.primary,
+                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.7)
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
                 ),
               ),
-              Column(
-                children: [
-                  SizedBox(
-                    height: screenHeight - contentHeight,
-                    child: SizedBox(
-                      width: screenWidth * 0.6,
-                      child: Image.asset(AppImages.splashBg),
+            ),
+            Column(
+              children: [
+                SizedBox(
+                  height: screenHeight - contentHeight,
+                  child: SizedBox(
+                    width: screenWidth * 0.6,
+                    child: Image.asset(AppImages.splashBg),
+                  ),
+                ),
+                Container(
+                  height: contentHeight,
+                  alignment: Alignment.bottomCenter,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(30),
+                      topLeft: Radius.circular(30),
                     ),
                   ),
-                  Container(
-                    height: contentHeight,
-                    alignment: Alignment.bottomCenter,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).scaffoldBackgroundColor,
-                      borderRadius: const BorderRadius.only(
-                        topRight: Radius.circular(30),
-                        topLeft: Radius.circular(30),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Expanded(
+                          child: Center(
+                        child: CircularProgressIndicator(
+                          strokeCap: StrokeCap.round,
+                        ),
+                      )),
+                      Text(
+                        'Whatsapp Status Saver',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 25,
+                              color: Theme.of(context)
+                                  .textTheme
+                                  .displayLarge
+                                  ?.color,
+                            ),
                       ),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Expanded(
-                            child: Center(
-                          child: CircularProgressIndicator(
-                            strokeCap: StrokeCap.round,
-                          ),
-                        )),
-                        Text(
-                          'Whatsapp Status Saver',
-                          textAlign: TextAlign.center,
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 25,
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .displayLarge
-                                        ?.color,
-                                  ),
-                        ),
-                        SizedBox(height: 10),
-                        Text(
-                          'Save your favorite statuses from WhatsApp and share them with your friends.',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        SizedBox(height: 50),
-                        CustomButton(
-                          title: _isPermissionGranted == null
-                              ? 'Get Started'
-                              : (_isPermissionGranted! ? 'Welcome' : 'Retry'),
-                          onTap: () {
-                            if (_isPermissionGranted == null) {
-                              tries += 1;
-                            }
-                            _initialize();
-                          },
-                        ),
-                        SizedBox(height: 50),
-                      ],
-                    ),
+                      SizedBox(height: 10),
+                      Text(
+                        'Save your favorite statuses from WhatsApp and share them with your friends.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      SizedBox(height: 50),
+                      CustomButton(
+                        title: _isPermissionGranted == null
+                            ? 'Get Started'
+                            : (_isPermissionGranted! ? 'Welcome' : 'Retry'),
+                        onTap: () {
+                          if (_isPermissionGranted == null) {
+                            tries += 1;
+                          }
+                          _initialize();
+                        },
+                      ),
+                      SizedBox(height: 50),
+                    ],
                   ),
-                ],
-              )
-            ],
-          ),
+                ),
+              ],
+            )
+          ],
         ));
   }
 }

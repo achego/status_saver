@@ -9,7 +9,7 @@ import 'package:status_saver/app/view_models/status_view_model.dart';
 import 'package:status_saver/core/utils/app_assets.dart';
 import 'package:status_saver/core/utils/date_time_extension.dart';
 
-class StatusTile extends StatelessWidget {
+class StatusTile extends StatefulWidget {
   final StatusModel status;
   final bool isLarge;
 
@@ -19,6 +19,13 @@ class StatusTile extends StatelessWidget {
     required this.isLarge,
   });
 
+  @override
+  State<StatusTile> createState() => _StatusTileState();
+}
+
+class _StatusTileState extends State<StatusTile> {
+  bool isSaving = false;
+  bool isSaved = false;
   @override
   Widget build(BuildContext context) {
     final viewModel = context.read<StatusViewModel>();
@@ -42,22 +49,54 @@ class StatusTile extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
                   child: AspectRatio(
-                    aspectRatio: isLarge ? 0.8 : 1.2,
-                    child: status.isVideo
+                    aspectRatio: widget.isLarge ? 0.8 : 1.2,
+                    child: widget.status.isVideo
                         ? _buildVideoThumbnail()
                         : Image.file(
-                            File(status.path),
+                            File(widget.status.path),
                             fit: BoxFit.cover,
                           ),
                   ),
                 ),
               ),
-              if (!status.isSaved(context))
+              if (widget.status.isVideo)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  left: 0,
+                  bottom: 0,
+                  child: Center(
+                    child: Container(
+                      padding: EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withValues(alpha: 0.4)),
+                      child: Container(
+                        height: 25,
+                        width: 25,
+                        padding: EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Theme.of(context)
+                              .primaryColor
+                              .withValues(alpha: 0.8),
+                        ),
+                        child: FittedBox(
+                          child: Icon(
+                            Icons.play_arrow_rounded,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              if (!widget.status.isSaved(context) && !isSaved)
                 Positioned(
                   right: 0,
                   bottom: 0,
                   child: InkWell(
-                    onTap: () => viewModel.saveStatus(context, status),
+                    onTap: () => _handleSaveStatus(context),
                     child: Padding(
                       padding: EdgeInsets.all(10),
                       child: Container(
@@ -74,8 +113,12 @@ class StatusTile extends StatelessWidget {
                             color: Theme.of(context).primaryColor,
                             borderRadius: BorderRadius.circular(5),
                           ),
-                          child:
-                              svgAsset(AppSvgs.download, color: Colors.white),
+                          child: isSaving
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                )
+                              : svgAsset(AppSvgs.download, color: Colors.white),
                         ),
                       ),
                     ),
@@ -85,7 +128,7 @@ class StatusTile extends StatelessWidget {
           ),
         ),
         SizedBox(height: 4),
-        Text(status.modifiedTime.timeAgo,
+        Text(widget.status.modifiedTime.timeAgo,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
@@ -94,10 +137,22 @@ class StatusTile extends StatelessWidget {
     );
   }
 
+  void _handleSaveStatus(BuildContext context) async {
+    final viewModel = context.read<StatusViewModel>();
+    setState(() {
+      isSaving = true;
+    });
+    await viewModel.saveStatus(context, widget.status);
+    setState(() {
+      isSaving = false;
+      isSaved = true;
+    });
+  }
+
   Widget _buildVideoThumbnail() {
-    if (status.thumbnailPath != null) {
+    if (widget.status.thumbnailPath != null) {
       return Image.file(
-        File(status.thumbnailPath!),
+        File(widget.status.thumbnailPath!),
         fit: BoxFit.cover,
       );
     }
@@ -108,7 +163,7 @@ class StatusTile extends StatelessWidget {
   }
 
   void _handleFileAction(BuildContext context) {
-    switch (status.type) {
+    switch (widget.status.type) {
       case StatusType.image:
         _navigateToImageViewer(context);
         break;
@@ -124,8 +179,8 @@ class StatusTile extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (context) => VideoViewer(
-          currentStatus: status,
-          statuses: status.isFromSaved(context)
+          currentStatus: widget.status,
+          statuses: widget.status.isFromSaved(context)
               ? viewModel.savedVideoStatuses
               : viewModel.videoStatuses,
         ),
@@ -140,8 +195,8 @@ class StatusTile extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (context) => ImageViewer(
-          currentStatus: status,
-          statuses: status.isFromSaved(context)
+          currentStatus: widget.status,
+          statuses: widget.status.isFromSaved(context)
               ? viewModel.savedImageStatuses
               : viewModel.imageStatuses,
         ),

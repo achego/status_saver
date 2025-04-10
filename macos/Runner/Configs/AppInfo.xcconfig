@@ -8,7 +8,7 @@
 PRODUCT_NAME = status_saver
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.statusSaver
+PRODUCT_BUNDLE_IDENTIFIER = dev.belema.statusSaver
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2025 com.example. All rights reserved.
