@@ -10,7 +10,6 @@ class Dashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<StatusViewModel>(builder: (context, viewModel, child) {
       return Scaffold(
-        extendBody: true,
         bottomNavigationBar: Container(
           height: 70,
           constraints: BoxConstraints(maxHeight: 70),

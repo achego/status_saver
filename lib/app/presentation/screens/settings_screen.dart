@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:status_saver/app/shared/components/function_widgets.dart';
+import 'package:status_saver/app/view_models/status_view_model.dart';
 import 'package:status_saver/core/utils/app_assets.dart';
 import 'package:status_saver/core/utils/environments.dart';
 import 'package:status_saver/core/utils/file_utils.dart';
@@ -41,75 +43,66 @@ class SettingsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Settings'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: ListView(
-          children: [
-            _buildSection(
-              context,
-              title: 'App',
-              items: [
-                _SettingsItem(
-                  icon: AppSvgs.share,
-                  title: 'Share App',
-                  onTap: _shareApp,
-                ),
-                _SettingsItem(
-                  icon: AppSvgs.star,
-                  title: 'Rate App',
-                  onTap: () => _launchUrl(Environments.appStoreUrl),
-                ),
-                FutureBuilder<PackageInfo>(
-                  future: PackageInfo.fromPlatform(),
-                  builder: (context, snapshot) {
-                    return _SettingsItem(
-                      icon: AppSvgs.info,
-                      title: 'Version',
-                      subtitle: snapshot.data?.version ?? 'Loading...',
-                    );
-                  },
-                ),
-              ],
-            ),
-            Divider(),
-            _buildSection(
-              context,
-              title: 'Storage',
-              items: [
-                FutureBuilder<String>(
-                  future: FileUtils.getSavedStatusesDirectory()
-                      .then((dir) => dir.path),
-                  builder: (context, snapshot) {
-                    return _SettingsItem(
-                      icon: AppSvgs.folder,
-                      title: 'Save Location',
-                      subtitle: snapshot.data ?? 'Loading...',
-                    );
-                  },
-                ),
-              ],
-            ),
-            Divider(),
-            _buildSection(
-              context,
-              title: 'Support',
-              items: [
-                _SettingsItem(
-                  icon: AppSvgs.email,
-                  title: 'Contact Developer',
-                  subtitle: Environments.email,
-                  onTap: _launchEmail,
-                ),
-                _SettingsItem(
-                  icon: AppSvgs.shield,
-                  title: 'Privacy Policy',
-                  onTap: () => _launchUrl(Environments.privacyPolicyUrl),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+      body: Consumer<StatusViewModel>(builder: (context, viewModel, child) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: ListView(
+            children: [
+              _buildSection(
+                context,
+                title: 'App',
+                items: [
+                  _SettingsItem(
+                    icon: AppSvgs.share,
+                    title: 'Share App',
+                    onTap: _shareApp,
+                  ),
+                  _SettingsItem(
+                    icon: AppSvgs.star,
+                    title: 'Rate App',
+                    onTap: () => _launchUrl(Environments.appStoreUrl),
+                  ),
+                  _SettingsItem(
+                    icon: AppSvgs.info,
+                    title: 'Version',
+                    subtitle: viewModel.settingsItem.appVersion,
+                  ),
+                ],
+              ),
+              Divider(),
+              _buildSection(
+                context,
+                title: 'Storage',
+                items: [
+                  _SettingsItem(
+                    icon: AppSvgs.folder,
+                    title: 'Save Location',
+                    subtitle: viewModel.settingsItem.storageLocation,
+                  ),
+                ],
+              ),
+              Divider(),
+              _buildSection(
+                context,
+                title: 'Support',
+                items: [
+                  _SettingsItem(
+                    icon: AppSvgs.email,
+                    title: 'Contact Developer',
+                    subtitle: Environments.email,
+                    onTap: _launchEmail,
+                  ),
+                  _SettingsItem(
+                    icon: AppSvgs.shield,
+                    title: 'Privacy Policy',
+                    onTap: () => _launchUrl(Environments.privacyPolicyUrl),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
 

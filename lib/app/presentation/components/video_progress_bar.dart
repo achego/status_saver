@@ -13,14 +13,29 @@ class VideoProgressBar extends StatefulWidget {
 class _VideoProgressBarState extends State<VideoProgressBar> {
   @override
   void initState() {
+    isScreenVisible = true;
     super.initState();
     _addVideoListener();
   }
 
+  @override
+  void dispose() {
+    isScreenVisible = false;
+    super.dispose();
+  }
+
   void _addVideoListener() {
     widget.videoController.addListener(() {
-      setState(() {});
+      _refreshState();
     });
+  }
+
+  bool isScreenVisible = false;
+
+  _refreshState() {
+    if (isScreenVisible) {
+      setState(() {});
+    }
   }
 
   @override
@@ -42,7 +57,7 @@ class _VideoProgressBarState extends State<VideoProgressBar> {
             widget.videoController.seekTo(
               Duration(seconds: value.toInt()),
             );
-            setState(() {});
+            _refreshState();
           },
         )),
         Text(

@@ -94,7 +94,10 @@ class _VideoViewerState extends State<VideoViewer> {
                       alignment: Alignment.center,
                       children: [
                         if (_isInitialized)
-                          VideoPlayer(_videoController)
+                          Hero(
+                            tag: widget.statuses[index].path,
+                            child: VideoPlayer(_videoController),
+                          )
                         else
                           const CircularProgressIndicator(),
 

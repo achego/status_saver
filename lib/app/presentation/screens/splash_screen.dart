@@ -32,6 +32,10 @@ class _SplashScreenState extends State<SplashScreen> {
     viewModel.cleanUpTempDir();
 
     final permissionStatus = await viewModel.hasPermission();
+    if (permissionStatus) {
+      _isPermissionGranted = true;
+      setState(() {});
+    }
     if (tries > 0) {
       setState(() {
         _isPermissionGranted = permissionStatus;

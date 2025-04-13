@@ -28,6 +28,8 @@ dependencies:
   saf_stream: ^0.11.2
   saf_util: ^0.7.0
   shared_preferences: ^2.5.3
+  share_whatsapp:
+    path: plugins/share_whatsapp
 
 dev_dependencies:
   flutter_test:

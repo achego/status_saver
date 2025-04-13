@@ -53,12 +53,15 @@ class _StatusTileState extends State<StatusTile> {
                   borderRadius: BorderRadius.circular(16),
                   child: AspectRatio(
                     aspectRatio: widget.isLarge ? 0.8 : 1.2,
-                    child: widget.status.isVideo
-                        ? _buildVideoThumbnail()
-                        : Image.file(
-                            File(widget.status.path),
-                            fit: BoxFit.cover,
-                          ),
+                    child: Hero(
+                      tag: widget.status.path,
+                      child: widget.status.isVideo
+                          ? _buildVideoThumbnail()
+                          : Image.file(
+                              File(widget.status.path),
+                              fit: BoxFit.cover,
+                            ),
+                    ),
                   ),
                 ),
               ),

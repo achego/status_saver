@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get_thumbnail_video/video_thumbnail.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:saf_stream/saf_stream.dart';
 import 'package:saf_util/saf_util.dart';
 import 'package:saf_util/saf_util_platform_interface.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:share_whatsapp/share_whatsapp.dart';
 import 'package:status_saver/app/models/status_model.dart';
 import 'package:status_saver/app/presentation/screens/home_screen.dart';
 import 'package:status_saver/app/presentation/screens/saved_statuses_screen.dart';
@@ -30,6 +32,15 @@ class BottomNavItemModel {
       required this.screen});
 }
 
+class SettingsItemModel {
+  String appVersion;
+  String storageLocation;
+  SettingsItemModel({
+    this.appVersion = '',
+    this.storageLocation = '',
+  });
+}
+
 class StatusViewModel extends ChangeNotifier {
   bool _isLoading = false;
   List<StatusModel> _statuses = [];
@@ -52,21 +63,6 @@ class StatusViewModel extends ChangeNotifier {
 
   int activeIndex = 0;
 
-  Future<bool> hasPermission() async {
-    final statusFolderPath = 'com.whatsapp/WhatsApp/Media/.Statuses';
-    try {
-      final directoryUri = localStorage.getSafDirectoryUri();
-      if (directoryUri == null) {
-        return false;
-      }
-      await saf.child(directoryUri, statusFolderPath.split('/'));
-      return true;
-    } catch (e, s) {
-      loggerEx(e, s);
-      return false;
-    }
-  }
-
   List<BottomNavItemModel> get bottomNavItems => [
         BottomNavItemModel(
             label: 'Home',
@@ -85,6 +81,23 @@ class StatusViewModel extends ChangeNotifier {
             screen: const SettingsScreen()),
       ];
 
+  SettingsItemModel settingsItem = SettingsItemModel();
+
+  Future<bool> hasPermission() async {
+    final statusFolderPath = 'com.whatsapp/WhatsApp/Media/.Statuses';
+    try {
+      final directoryUri = localStorage.getSafDirectoryUri();
+      if (directoryUri == null) {
+        return false;
+      }
+      await saf.child(directoryUri, statusFolderPath.split('/'));
+      return true;
+    } catch (e, s) {
+      loggerEx(e, s);
+      return false;
+    }
+  }
+
   void setActiveIndex(int index) {
     activeIndex = index;
     notifyListeners();
@@ -93,6 +106,16 @@ class StatusViewModel extends ChangeNotifier {
   Future<void> initializeAndLoadStatuses() async {
     await refreshStatuses();
     await getSavedStatuses();
+    initSettingsItem();
+  }
+
+  void initSettingsItem() async {
+    PackageInfo.fromPlatform().then((value) {
+      settingsItem.appVersion = value.version;
+    });
+    FileUtils.getSavedStatusesDirectory().then((value) {
+      settingsItem.storageLocation = value.path;
+    });
   }
 
   Future<void> getSavedStatuses() async {
@@ -226,16 +249,12 @@ class StatusViewModel extends ChangeNotifier {
 
   Future<void> repostStatus(BuildContext context, StatusModel status) async {
     try {
-      // final uri = Uri.parse('whatsapp://send?text=');
-      final file = File(status.path);
-      final uri = Uri.parse(
-          "whatsapp://send?phone=+2348108888888&text=Check%20this%20image&file=${file.path}");
-
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri);
-      } else {
-        throw 'Could not launch WhatsApp';
+      final isWhatsAppInstalled =
+          await shareWhatsapp.installed(type: WhatsApp.standard);
+      if (!isWhatsAppInstalled) {
+        return;
       }
+      await shareWhatsapp.shareFile(XFile(status.path));
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
