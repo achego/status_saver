@@ -25,6 +25,9 @@ dependencies:
   get_thumbnail_video: ^0.7.3
   url_launcher: ^6.2.5
   package_info_plus: ^8.0.0
+  saf_stream: ^0.11.2
+  saf_util: ^0.7.0
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:

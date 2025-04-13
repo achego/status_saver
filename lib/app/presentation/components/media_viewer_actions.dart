@@ -154,8 +154,7 @@ class _MediaViewerActionsState extends State<MediaViewerActions> {
                                     context,
                                     status,
                                   );
-                                  // widget.statuses
-                                  //     .removeAt(widget._currentIndex);
+                                  widget.onStatusAction?.call();
                                   setState(() {});
                                 } else if (!status.isSaved(context)) {
                                   await viewModel.saveStatus(
@@ -164,9 +163,10 @@ class _MediaViewerActionsState extends State<MediaViewerActions> {
                                   );
                                 }
                                 setState(() => isSaving = false);
-                                widget.onStatusAction?.call();
                                 if (widget.statuses.isEmpty) {
-                                  Navigator.pop(context);
+                                  if (context.mounted) {
+                                    Navigator.pop(context);
+                                  }
                                 }
                               },
                             ),

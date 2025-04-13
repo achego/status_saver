@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:status_saver/app/presentation/screens/dashboard.dart';
-import 'package:status_saver/app/presentation/screens/home_screen.dart';
 import 'package:status_saver/app/presentation/screens/splash_screen.dart';
 import 'package:status_saver/app/view_models/status_view_model.dart';
 import 'package:status_saver/core/theme/app_theme.dart';
 import 'package:status_saver/core/theme/theme_provider.dart';
+import 'package:status_saver/core/utils/app_initialization.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AppInitialization.initializeDependencies();
   runApp(const MyApp());
 }
 

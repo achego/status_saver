@@ -2,15 +2,20 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get_thumbnail_video/video_thumbnail.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:saf_stream/saf_stream.dart';
+import 'package:saf_util/saf_util.dart';
+import 'package:saf_util/saf_util_platform_interface.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:status_saver/app/models/status_model.dart';
 import 'package:status_saver/app/presentation/screens/home_screen.dart';
 import 'package:status_saver/app/presentation/screens/saved_statuses_screen.dart';
 import 'package:status_saver/app/presentation/screens/settings_screen.dart';
+import 'package:status_saver/app/services/local/local_storage.dart';
 import 'package:status_saver/core/utils/app_assets.dart';
+import 'package:status_saver/core/utils/extensions.dart';
 import 'package:status_saver/core/utils/file_utils.dart';
+import 'package:status_saver/core/utils/logger.dart';
 import 'package:url_launcher/url_launcher.dart';
-// import 'package:video_thumbnail/video_thumbnail.dart';
 
 class BottomNavItemModel {
   final String label;
@@ -42,7 +47,25 @@ class StatusViewModel extends ChangeNotifier {
   List<StatusModel> get videoStatuses =>
       _statuses.where((s) => s.isVideo).toList();
 
+  final saf = SafUtil();
+  final safStream = SafStream();
+
   int activeIndex = 0;
+
+  Future<bool> hasPermission() async {
+    final statusFolderPath = 'com.whatsapp/WhatsApp/Media/.Statuses';
+    try {
+      final directoryUri = localStorage.getSafDirectoryUri();
+      if (directoryUri == null) {
+        return false;
+      }
+      await saf.child(directoryUri, statusFolderPath.split('/'));
+      return true;
+    } catch (e, s) {
+      loggerEx(e, s);
+      return false;
+    }
+  }
 
   List<BottomNavItemModel> get bottomNavItems => [
         BottomNavItemModel(
@@ -84,60 +107,36 @@ class StatusViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final whatsappDir = await _getWhatsAppStatusDirectory();
-      if (whatsappDir == null) {
+      final whatsappDirUri = localStorage.getSafDirectoryUri();
+      if (whatsappDirUri == null) {
         throw Exception('WhatsApp status directory not found');
       }
 
-      final statusFiles = await _getStatusFiles(whatsappDir);
-
+      final statusSafFiles = await _getStatusFiles(whatsappDirUri);
+      final statusFiles = await statusSafFiles.cacheFiles();
       _statuses = await _processStatusFiles(statusFiles, _statuses);
       _isLoading = false;
       notifyListeners();
-    } catch (e) {
+    } catch (e, s) {
+      loggerEx(e, s);
       _error = e.toString();
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<Directory?> _getWhatsAppStatusDirectory() async {
-    if (Platform.isAndroid) {
-      final directory = await getApplicationDocumentsDirectory();
-
-      final baseDir = directory.path.split('Android')[0];
-      final whatsappDir = Directory(
-          '$baseDir/Android/media/com.whatsapp/WhatsApp/Media/.Statuses');
-
-      if (!whatsappDir.existsSync()) {
-        // Try alternative path for newer Android versions
-        final altWhatsappDir = Directory(
-            '/storage/emulated/0/Android/media/com.whatsapp/WhatsApp/Media/.Statuses');
-        if (altWhatsappDir.existsSync()) {
-          return altWhatsappDir;
-        }
-        return null;
-      }
-
-      return whatsappDir;
-    }
-    return null;
-  }
-
-  Future<List<FileSystemEntity>> _getStatusFiles(Directory directory) async {
-    if (!directory.existsSync()) return [];
+  Future<List<SafDocumentFile>> _getStatusFiles(String directoryUri) async {
+    final statusFolderPath = 'com.whatsapp/WhatsApp/Media/.Statuses';
 
     try {
-      final files = await directory.list().toList();
-      return files
-          .where((entity) =>
-              entity is File &&
-              (entity.path.endsWith('.jpg') ||
-                  entity.path.endsWith('.mp4') ||
-                  entity.path.endsWith('.jpeg')))
-          .toList();
-    } catch (e) {
-      debugPrint('Error listing directory: $e');
+      final status = await saf.child(directoryUri, statusFolderPath.split('/'));
+      if (status == null) {
+        return [];
+      }
+      final statusFiles = await saf.list(status.uri);
+      return statusFiles.where((e) => e.isImage || e.isVideo).toList();
+    } catch (e, s) {
+      loggerEx(e, s);
       return [];
     }
   }
@@ -157,7 +156,7 @@ class StatusViewModel extends ChangeNotifier {
       );
       final exists = existingStatus.isNotEmpty;
 
-      if (path.endsWith('.mp4')) {
+      if (path.isVideo) {
         statuses.add(StatusModel(
           path: path,
           type: StatusType.video,
@@ -166,7 +165,7 @@ class StatusViewModel extends ChangeNotifier {
               ? existingStatus.first.thumbnailPath
               : await _generateVideoThumbnail(path),
         ));
-      } else if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+      } else if (path.isImage) {
         statuses.add(StatusModel(
           path: path,
           type: StatusType.image,
@@ -187,23 +186,8 @@ class StatusViewModel extends ChangeNotifier {
       );
       print('Thumbnail path: ${thumbnailFile.path}');
       return thumbnailFile.path;
-    } catch (e) {
-      debugPrint('Error generating thumbnail: $e');
-      return null;
-    }
-  }
-
-  Future<String?> _generateVideoThumbnailForVideos(String videoPath) async {
-    try {
-      XFile thumbnailFile = await VideoThumbnail.thumbnailFile(
-        video: videoPath,
-        thumbnailPath: (await getTemporaryDirectory()).path,
-        quality: 80,
-      );
-      print('Thumbnail path: ${thumbnailFile.path}');
-      return thumbnailFile.path;
-    } catch (e) {
-      debugPrint('Error generating thumbnail: $e');
+    } catch (e, s) {
+      loggerEx(e, s);
       return null;
     }
   }
@@ -215,7 +199,8 @@ class StatusViewModel extends ChangeNotifier {
         [XFile(status.path)],
         text: 'Check out this status!',
       );
-    } catch (e) {
+    } catch (e, s) {
+      loggerEx(e, s);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error sharing status')),
@@ -229,7 +214,8 @@ class StatusViewModel extends ChangeNotifier {
       await FileUtils.saveStatus(File(status.path));
       await initializeAndLoadStatuses();
       await Future.delayed(const Duration(milliseconds: 500));
-    } catch (e) {
+    } catch (e, s) {
+      loggerEx(e, s);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Error saving status')),
@@ -272,6 +258,38 @@ class StatusViewModel extends ChangeNotifier {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Error deleting status')),
         );
+      }
+    }
+  }
+
+  Future<bool> requestPermission() async {
+    final uri = "Android/media".toStorageUri;
+    final selectedUri = await saf.pickDirectory(
+        initialUri: uri, writePermission: true, persistablePermission: true);
+    if (selectedUri == null) {
+      return false;
+    }
+    localStorage.saveSafDirectoryUri(selectedUri.uri);
+
+    return true;
+  }
+
+  Future<void> cleanUpTempDir(
+      {Duration maxAge = const Duration(hours: 27)}) async {
+    final dir = await getTemporaryDirectory();
+    final now = DateTime.now();
+
+    if (!dir.existsSync()) {
+      return;
+    }
+
+    final files = dir.listSync();
+    for (final file in files) {
+      final stat = await file.stat();
+      final age = now.difference(stat.modified);
+
+      if (age > maxAge) {
+        await file.delete();
       }
     }
   }

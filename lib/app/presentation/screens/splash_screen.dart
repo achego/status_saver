@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:status_saver/app/presentation/screens/dashboard.dart';
+import 'package:status_saver/app/services/local/local_storage.dart';
 import 'package:status_saver/app/shared/components/custom_button.dart';
 import 'package:status_saver/app/shared/components/dialogs/permision_dilog.dart';
 import 'package:status_saver/app/view_models/status_view_model.dart';
@@ -21,13 +22,16 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _initialize();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      _initialize();
+    });
   }
 
   Future<void> _initialize() async {
     final viewModel = context.read<StatusViewModel>();
+    viewModel.cleanUpTempDir();
 
-    final permissionStatus = await Permission.manageExternalStorage.isGranted;
+    final permissionStatus = await viewModel.hasPermission();
     if (tries > 0) {
       setState(() {
         _isPermissionGranted = permissionStatus;
@@ -43,11 +47,11 @@ class _SplashScreenState extends State<SplashScreen> {
         _isPermissionGranted = granted;
       });
       if (granted) {
-        final status = await Permission.manageExternalStorage.request();
+        final isGranted = await viewModel.requestPermission();
         setState(() {
-          _isPermissionGranted = status.isGranted;
+          _isPermissionGranted = isGranted;
         });
-        if (!status.isGranted) {
+        if (!isGranted) {
           return;
         }
       } else {
@@ -55,10 +59,9 @@ class _SplashScreenState extends State<SplashScreen> {
       }
     }
 
-    await viewModel.refreshStatuses();
-    await viewModel.getSavedStatuses();
-
+    await viewModel.initializeAndLoadStatuses();
     await Future.delayed(const Duration(seconds: 1));
+
     if (mounted) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const Dashboard()),

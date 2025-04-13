@@ -32,7 +32,7 @@ class FileUtils {
 
   static Future<List<File>> getSavedStatuses() async {
     final savedDir = await getSavedStatusesDirectory();
-    if (!await savedDir.exists()) return [];
+    if (!savedDir.existsSync()) return [];
 
     final files = await savedDir
         .list()
